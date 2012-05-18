@@ -10,7 +10,7 @@ public class ServerTest{
 		Server serverApplication = new Server();
 		serverApplication.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		serverApplication.setVisible( true );
-		serverApplication.setSize(300, 350);
+		serverApplication.setSize(300, 400);
 		serverApplication.runServer();
 	}
 }

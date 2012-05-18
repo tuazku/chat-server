@@ -65,7 +65,7 @@ public class Server extends JFrame{
 		
 		try {
 			
-			server = new ServerSocket(1234, 10);
+			server = new ServerSocket(12345, 10);
 		
 			while( true ) {
 			
@@ -112,7 +112,7 @@ public class Server extends JFrame{
 		do {
 			try {
 				message = (String)inputStream.readObject();
-				displayMessage( message );
+				displayMessage( "\n" + message );
 			}
 			catch ( ClassNotFoundException e ) {
 				displayMessage("\nUnknown object type received");

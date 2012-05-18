@@ -117,7 +117,7 @@ public class Server extends JFrame{
 			catch ( ClassNotFoundException e ) {
 				displayMessage("\nUnknown object type received");
 			}
-		} while ( !message.equals( "CLIENT>>> TERMINATE" ));
+		} while ( !message.equals( "CLIENT>>>> TERMINATE" ));
 	}
 	
 	private void closeConnection() {

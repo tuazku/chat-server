@@ -1,4 +1,4 @@
-package chat.server;
+package chat.app.server;
 import javax.swing.JFrame;
 /**
  * @author Azamat Turgunbaev

@@ -1,4 +1,4 @@
-package chat.client;
+package chat.app.client;
 import javax.swing.JFrame;
 
 

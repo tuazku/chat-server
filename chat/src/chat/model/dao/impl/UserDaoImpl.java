@@ -17,14 +17,19 @@ import chat.model.dao.UserDao;
 public class UserDaoImpl implements UserDao{
 
 	List<User> onlineList = new ArrayList<>();
-	
+		
 	SessionFactory factory = new Configuration().configure().buildSessionFactory();
 	Session session = factory.openSession();
 	
 	@Override
 	public void register(User user) {
-		// TODO Auto-generated method stub
-		
+		try{
+			session.beginTransaction();
+			session.save(user);
+			session.getTransaction().commit();
+		} catch ( Exception e ){
+			e.printStackTrace();
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -40,8 +45,13 @@ public class UserDaoImpl implements UserDao{
 
 	@Override
 	public void login(User user) {
-		// TODO Auto-generated method stub
-		
+		// TODO Auto-generated method stub	
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<User> listUser() {
+		return session.createQuery("from User").list();
 	}
 
 }

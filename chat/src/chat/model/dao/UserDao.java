@@ -13,4 +13,5 @@ public interface UserDao{
 	public void register( User user );
 	public List<User> onlineList();
 	public void login( User user );
+	public List<User> listUser();
 }

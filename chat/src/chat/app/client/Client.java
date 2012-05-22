@@ -36,7 +36,7 @@ public class Client extends JFrame{
 	private String server;
 	private Socket socket;
 	
-	public Client( String host ) {
+	public Client( String host ) throws Exception {
 		
 		super("Client");
 		server = host;
@@ -58,7 +58,9 @@ public class Client extends JFrame{
 		add( new JScrollPane(displayArea));
 		
 		setSize(300, 400);
-		setVisible(true);		
+		setVisible(true);	
+		
+		runClient();
 	}
 	
 	public void runClient() throws Exception {

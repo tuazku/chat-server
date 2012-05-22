@@ -13,6 +13,6 @@ public class ClientTest {
 		Client clientApplication = new Client("127.0.0.1");
 		
 		clientApplication.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		clientApplication.runClient();
+		//clientApplication.runClient();
 	}
 }

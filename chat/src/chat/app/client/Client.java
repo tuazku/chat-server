@@ -130,10 +130,7 @@ public class Client extends JFrame{
 			e.printStackTrace();
 		}
 		finally{
-			for( int i = 5; i > 0; i-- ) {
-				displayMessage("\nApllication will be closed afert " + i + " seconds");
-				Thread.sleep(1000);
-			}
+			
 			System.exit(0);
 				
 		}

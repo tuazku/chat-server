@@ -3,6 +3,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Hibernate"/>
-	<classpathentry kind="lib" path="D:/Library/Algorithms and Programming/Java/Java - Programming for Web/Hibernate/postgresql-9.0-801.jdbc4.jar"/>
+	<classpathentry kind="lib" path="C:/jboss-as-7.0.2.Final/modules/org/postgresql/main/postgresql-9.0-801.jdbc4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -31,9 +31,7 @@ public class Login extends JFrame{
 	private JButton button;
 	
 	private List<User> userList;
-	
-	Client client;
-	
+		
 	private UserDao userDao = new UserDaoImpl();
 	
 	public Login(){
@@ -61,12 +59,14 @@ public class Login extends JFrame{
 					if( user.getUserName().equals(userName.getText()) && user.getPassword().equals( new String( userPassword.getPassword() ) ) ) {
 			
 						try {
-							JFrame a = new JFrame();
-							client = new Client("127.0.0.1");
-							a.add(client);
-						
-						} catch (Exception e1) {
+							setVisible(false);
+							ClientTest test = new ClientTest();
+						} 
+						catch (Exception e1) {
 							e1.printStackTrace();
+						}
+						finally{
+							
 						}
 						
 					}

@@ -1,9 +1,12 @@
 package chat.app.client;
 
+import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -26,9 +29,12 @@ public class Login extends JFrame{
 	 */
 	private static final long serialVersionUID = -8226828221543501499L;
 	
+	ExecutorService executor = Executors.newCachedThreadPool();
+	
 	private JTextField userName;
 	private JPasswordField userPassword;
 	private JButton button;
+	private User currentUser;
 	
 	private List<User> userList;
 		
@@ -58,9 +64,14 @@ public class Login extends JFrame{
 				
 					if( user.getUserName().equals(userName.getText()) && user.getPassword().equals( new String( userPassword.getPassword() ) ) ) {
 			
+						currentUser = user;
+						userDao.setOnline( user, true );
+						
 						try {
 							setVisible(false);
-							ClientTest test = new ClientTest();
+							Client client = new Client("127.0.0.1", currentUser );
+							client.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);	
+							executor.execute(client);
 						} 
 						catch (Exception e1) {
 							e1.printStackTrace();

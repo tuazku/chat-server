@@ -1,67 +1,135 @@
 package chat.app.client;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JFrame;
+import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+
+import chat.model.User;
+import chat.model.dao.UserDao;
+import chat.model.dao.impl.UserDaoImpl;
 
 
 /**
  * @author Azamat Turgunbaev
  *
  */
-public class Client extends JFrame{
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+	public class Client extends JFrame implements Runnable{
 	
-	private JTextField enterField;
-	private JTextArea displayArea;
-	
-	private ObjectOutputStream outputStream;
-	private ObjectInputStream inputStream;
-	
-	private String message = null;
-	private String server;
-	private Socket socket;
-	
-	public Client( String host ) throws Exception {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
 		
-		super("Client");
-		server = host;
+		private JTextField enterField;
+		private JTextArea displayArea;
+		private JList userList;
+		private JPanel displayPanel;
 		
-		enterField = new JTextField();
-		enterField.setEditable(false);
-		enterField.addActionListener(
-			new ActionListener() {
+		private ObjectOutputStream outputStream;
+		private ObjectInputStream inputStream;
+		
+		private UserDao userDao = new UserDaoImpl();
+		private User currentUser;
+		
+		private String message = null;
+		private String server;
+		private Socket socket;
+	
+		private String sendTo = "";
+		
+		public Client( String host, User newUser ) throws Exception {
+			
+			super("Client | " + newUser.getName() + " " + newUser.getSurname() );
+			
+			currentUser = newUser;
+			server = host;	
+			
+			List<User> usersList = getOnlineUsers();
+			int count = usersList.size();
+			String users[] = new String[count];
+						
+			for( User user : usersList )
+				users[--count] = user.getName() + " " + user.getSurname();
 				
-				public void actionPerformed(ActionEvent event) {
-					sendData( event.getActionCommand() );
-					enterField.setText("");
-				} 
-		});
-		
-		add(enterField, BorderLayout.NORTH);
-		
-		displayArea = new JTextArea();
-		add( new JScrollPane(displayArea));
-		
-		setSize(300, 400);
-		setVisible(true);	
-		
-		runClient();
-	}
+			//Enter Field
+			enterField = new JTextField();
+			enterField.setEditable(false);
+			System.out.println(getSendTo());
+			enterField.addActionListener(
+			
+					
+				new ActionListener() {
+					
+					String message;
+					
+					public void actionPerformed(ActionEvent event) {
+						
+						if( getSendTo() == "" ){
+							message = (currentUser.getName() + " " + currentUser.getSurname() + " :\n   ") + event.getActionCommand();
+							displayMessage( "\n" + message );
+						}
+						else{
+							message = currentUser.getName() + " " + currentUser.getSurname() + " :\n   " + event.getActionCommand();
+							displayMessage( "\n" + message );
+						}
+						
+						sendData( getSendTo() + "<<>>" + message );
+						enterField.setText("");
+					} 
+			});
+			add(enterField, BorderLayout.SOUTH);
+			
+			//User List
+			userList = new JList(users);
+			userList.addListSelectionListener( new ListSelectionListener() {
+				
+				public void valueChanged(ListSelectionEvent e) {
+					setSendTo(userList.getSelectedValue().toString());
+				}
+			});
+			add(userList, BorderLayout.EAST);
+			
+			//Display Area
+			displayArea = new JTextArea();
+			displayArea.setEditable(false);
+			add( new JScrollPane(displayArea));
+			
+			displayPanel = new JPanel();
+			displayPanel.setBackground( Color.white);
+			displayPanel.add(userList);
+			add(displayPanel, BorderLayout.EAST );
+			
+			this.addWindowListener(new java.awt.event.WindowAdapter() {
+				
+				public void windowClosing( WindowEvent event ){
+					try {
+						userDao.setOnline( currentUser, false );
+						closeConnection();
+					} catch (Exception e) {
+					}
+				}
+			});
+						
+			setSize(400, 400);
+			setVisible(true);	
+		}
 	
 	public void runClient() throws Exception {
 		
@@ -83,11 +151,12 @@ public class Client extends JFrame{
 	}
 	
 	public void connectToServer() throws IOException{
+		
 		displayMessage( "Attempting to connect to server\n" );
 		
 		socket = new Socket( InetAddress.getByName(server), 12345 );
 		
-		displayMessage( "Connecter to " + socket.getInetAddress().getHostName());
+		displayMessage( "Connected to " + socket.getInetAddress().getHostName());
 	}
 	
 	public void getStreams() throws IOException {
@@ -112,8 +181,10 @@ public class Client extends JFrame{
 				displayMessage("\nUnknown object type received");
 			}
 		} 
-		while (!message.equals("SERVER>>> TERMINATE"));
+		while (!message.equals("SERVER>>> TERMINATE") );
 		
+		userDao.setOnline( currentUser, false );
+
 	}
 	
 	public void closeConnection() throws Exception{
@@ -130,18 +201,16 @@ public class Client extends JFrame{
 			e.printStackTrace();
 		}
 		finally{
-			
-			System.exit(0);
-				
+			System.exit(0);	
 		}
 	}
 	
 	public void sendData( String data ) {
 		
 		try{
-			outputStream.writeObject( "CLIENT>>>> " + data);
+			outputStream.writeObject( ">>>> " + data);
 			outputStream.flush();
-			displayMessage( "\nCLIENT>>>> " + data );
+			
 		}
 		catch( IOException e ) {
 			displayMessage( "\nError writing object" );
@@ -150,5 +219,34 @@ public class Client extends JFrame{
 	
 	public void displayMessage( String message ){
 		displayArea.append(message);
+	}
+	
+	public List getOnlineUsers(){
+		
+		UserDao userDao = new UserDaoImpl();
+		List<User> userList = new ArrayList<User>();
+		
+		userList = userDao.onlineList();
+		
+		return userList;
+	}
+
+	public String getSendTo() {
+		return sendTo;
+	}
+
+	public void setSendTo(String sendTo) {
+		this.sendTo = sendTo;
+	}
+
+	@Override
+	public void run() {
+		try {
+			runClient();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 }

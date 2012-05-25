@@ -8,6 +8,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -23,6 +25,8 @@ public class Server extends JFrame{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	
+	ExecutorService executorService = Executors.newCachedThreadPool();
 	
 	private JTextField enterField;
 	private JTextArea displayArea;
@@ -72,8 +76,6 @@ public class Server extends JFrame{
 			
 				try {
 					waitConnection();
-					getStreams();
-					processConnection();
 				} 
 				catch ( EOFException e) {
 					displayMessage("\nServer terminated connection");
@@ -92,35 +94,12 @@ public class Server extends JFrame{
 	}
 	
 	private void waitConnection() throws IOException {
+		
 		displayMessage("Waiting for connection\n");
 		connection = server.accept();
 		displayMessage("Connection " + counter + " received from host " + connection.getInetAddress().getHostAddress());
 	}
-	
-	private void getStreams() throws IOException {
-		outputStream = new ObjectOutputStream( connection.getOutputStream() );
-		outputStream.flush();
 		
-		inputStream = new ObjectInputStream( connection.getInputStream() );
-	}
-	
-	private void processConnection() throws IOException {
-		String message = "Connection Successful";
-		sendMessage( message );
-		
-		enterField.setEditable( true );
-		
-		do {
-			try {
-				message = (String)inputStream.readObject();
-				displayMessage( "\n" + message );
-			}
-			catch ( ClassNotFoundException e ) {
-				displayMessage("\nUnknown object type received");
-			}
-		} while ( !message.equals( "CLIENT>>>> TERMINATE" ));
-	}
-	
 	private void closeConnection() {
 		displayMessage( "\nTerminating connection\n");
 		enterField.setEditable(false);

@@ -14,4 +14,5 @@ public interface UserDao{
 	public List<User> onlineList();
 	public void login( User user );
 	public List<User> listUser();
+	public void setOnline( User user, boolean value );
 }

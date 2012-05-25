@@ -30,6 +30,9 @@ public class UserDaoImpl implements UserDao{
 		} catch ( Exception e ){
 			e.printStackTrace();
 		}
+		finally{
+			session.close();
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -38,7 +41,7 @@ public class UserDaoImpl implements UserDao{
 		
 		session.beginTransaction();
 		
-		onlineList = session.createQuery("from User where online = 1").list(); 
+		onlineList = session.createQuery("from User where online = TRUE").list(); 
 		
 		return onlineList;
 	}
@@ -53,5 +56,18 @@ public class UserDaoImpl implements UserDao{
 	public List<User> listUser() {
 		return session.createQuery("from User").list();
 	}
+
+	@Override
+	public void setOnline( User user, boolean value ) {
+		
+		user.setOnline(value);
+		
+		session.beginTransaction();
+		session.update(user);
+		session.getTransaction().commit();
+		session.close();
+	}
+	
+	
 
 }

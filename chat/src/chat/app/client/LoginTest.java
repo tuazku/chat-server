@@ -15,6 +15,6 @@ public class LoginTest {
 		
 		Login login = new Login();
 		login.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
+		login.setVisible(true);
 	}
 }

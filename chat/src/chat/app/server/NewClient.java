@@ -30,7 +30,17 @@ public class NewClient implements Runnable {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		finally{
+	}
+		
+	public void run() {
+			
+		try {
+			processConnection();
+		} 
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		finally {
 			closeConnection();
 		}
 	}
@@ -54,9 +64,30 @@ public class NewClient implements Runnable {
 		}
 	}
 	
-	@Override
-	public void run() {
-					
+	private void processConnection() throws IOException {
+		
+		String message = "Connected to server";
+		sendMessage( message );
+		
+		do {
+			try {
+				message = (String)inputStream.readObject();
+				System.out.println( message );
+			}
+			catch ( ClassNotFoundException e ) {
+				
+			}
+		} while ( !message.equals( "TERMINATE" ));
 	}
 	
+	private void sendMessage( String message ) {
+		
+		try {
+			outputStream.writeObject( " " + message );
+			outputStream.flush();
+		}
+		catch (IOException e) {
+			
+		}
+	}	
 }

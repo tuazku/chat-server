@@ -121,6 +121,8 @@ import chat.model.dao.impl.UserDaoImpl;
 				public void windowClosing( WindowEvent event ){
 					try {
 						userDao.setOnline( currentUser, false );
+						sendData("TERMINATE");
+						Thread.sleep(500);
 						closeConnection();
 					} catch (Exception e) {
 					}
@@ -208,7 +210,7 @@ import chat.model.dao.impl.UserDaoImpl;
 	public void sendData( String data ) {
 		
 		try{
-			outputStream.writeObject( ">>>> " + data);
+			outputStream.writeObject( data );
 			outputStream.flush();
 			
 		}

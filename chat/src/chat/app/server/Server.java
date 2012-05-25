@@ -1,7 +1,4 @@
 package chat.app.server;
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -14,7 +11,6 @@ import java.util.concurrent.Executors;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 /**
  * @author Azamat Turgunbaev
  *
@@ -26,9 +22,8 @@ public class Server extends JFrame{
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	ExecutorService executorService = Executors.newCachedThreadPool();
+	private ExecutorService executorService = Executors.newCachedThreadPool();
 	
-	private JTextField enterField;
 	private JTextArea displayArea;
 	
 	private ObjectOutputStream outputStream;
@@ -36,73 +31,48 @@ public class Server extends JFrame{
 	
 	private ServerSocket server;
 	private Socket connection;
-	
-	private int counter = 1;
+		
+	private int counter = 0;
 	
 	public Server() {
 		
 		super("Server Application with GUI");
 		
-		enterField = new JTextField();
-		enterField.setEditable(false);
-		enterField.addActionListener(
-			new ActionListener() {
-				
-				public void actionPerformed( ActionEvent event ) {
-					
-					sendMessage( event.getActionCommand() );
-					enterField.setText("");
-				}
-			}
-		);
-		
-		add( enterField, BorderLayout.NORTH);
+		try {
+			server = new ServerSocket( 12345, 10 );
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
 		
 		displayArea = new JTextArea();
-		
+		displayArea.setEditable(false);
 		add( new JScrollPane( displayArea ));
 		
 		setSize( 300, 500 );
 		setVisible( true );
 	}
 	
-	public void runServer() {
+	public void runServer() throws IOException {
 		
-		try {
-			
-			server = new ServerSocket(12345, 10);
+		displayMessage( "Server started" );
+		while( true ) {
 		
-			while( true ) {
-			
-				try {
-					waitConnection();
-				} 
-				catch ( EOFException e) {
-					displayMessage("\nServer terminated connection");
-				}
-				finally {
-					closeConnection();
-					++counter;
-				}
-				
-			}
+			try {
+				Socket connection = server.accept();
+				NewClient newClient = new NewClient( connection );
+				executorService.execute( newClient );
+				displayMessage( "\nConnection " + ++counter + " received from " + connection.getInetAddress().getHostAddress() );
+			} 
+			catch ( EOFException e) {
+				displayMessage("\nServer terminated connection");
+			}	
 		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-	}
-	
-	private void waitConnection() throws IOException {
-		
-		displayMessage("Waiting for connection\n");
-		connection = server.accept();
-		displayMessage("Connection " + counter + " received from host " + connection.getInetAddress().getHostAddress());
 	}
 		
 	private void closeConnection() {
+		
 		displayMessage( "\nTerminating connection\n");
-		enterField.setEditable(false);
 		
 		try {
 			outputStream.close();

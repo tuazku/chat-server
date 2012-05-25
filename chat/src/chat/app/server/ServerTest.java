@@ -1,4 +1,6 @@
 package chat.app.server;
+import java.io.IOException;
+
 import javax.swing.JFrame;
 /**
  * @author Azamat Turgunbaev
@@ -6,7 +8,7 @@ import javax.swing.JFrame;
  */
 public class ServerTest{
 
-	public static void main( String [] args ) {
+	public static void main( String [] args ) throws IOException {
 		
 		Server serverApplication = new Server();
 		serverApplication.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );

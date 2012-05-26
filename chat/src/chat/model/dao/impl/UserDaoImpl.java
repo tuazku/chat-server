@@ -16,7 +16,7 @@ import chat.model.dao.UserDao;
  */
 public class UserDaoImpl implements UserDao{
 
-	List<User> onlineList = new ArrayList<>();
+	List<User> list = new ArrayList<>();
 		
 	SessionFactory factory = new Configuration().configure().buildSessionFactory();
 	Session session = factory.openSession();
@@ -38,12 +38,7 @@ public class UserDaoImpl implements UserDao{
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<User> onlineList() {
-		
-		session.beginTransaction();
-		
-		onlineList = session.createQuery("from User where online = TRUE").list(); 
-		
-		return onlineList;
+		return session.createQuery("from User where online = TRUE").list(); 	 
 	}
 
 	@Override
@@ -54,7 +49,11 @@ public class UserDaoImpl implements UserDao{
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<User> listUser() {
-		return session.createQuery("from User").list();
+		session.beginTransaction();
+		list = session.createQuery("from User").list();
+		session.getTransaction().commit();
+		
+		return list;
 	}
 
 	@Override
@@ -65,7 +64,6 @@ public class UserDaoImpl implements UserDao{
 		session.beginTransaction();
 		session.update(user);
 		session.getTransaction().commit();
-		session.close();
 	}
 	
 	

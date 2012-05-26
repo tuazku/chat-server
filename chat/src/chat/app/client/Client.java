@@ -12,6 +12,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -35,7 +37,7 @@ import chat.model.dao.impl.UserDaoImpl;
 		
 		private JTextField enterField;
 		private JTextArea displayArea;
-		private JList<?> userList;
+		private JList<?> userJList;
 		private JPanel displayPanel;
 		
 		private ObjectOutputStream outputStream;
@@ -44,9 +46,12 @@ import chat.model.dao.impl.UserDaoImpl;
 		private UserDao userDao = new UserDaoImpl();
 		private User currentUser;
 		
+		private DefaultListModel<String> users = new DefaultListModel<>();
 		private String message = null;
 		private String server;
 		private Socket socket;
+		
+		private int counter = 0;
 	
 		private String sendTo = "";
 		
@@ -57,19 +62,11 @@ import chat.model.dao.impl.UserDaoImpl;
 			currentUser = newUser;
 			server = host;	
 			
-			List<User> usersList = getOnlineUsers();
-			int count = usersList.size();
-			String users[] = new String[count];
+			List<User> onlineList = getOnlineUsers();
 			
-			for( User user : usersList ) {
-				if( !currentUser.getUserName().equals(user.getUserName()))
-					users[--count] = user.getName() + " " + user.getSurname();
-				else
-					continue;
-			}
-			
-			if( count == usersList.size() ){
-				users[--count] = "Nobody to talk";
+			for( User user : onlineList ) {
+				if( !currentUser.getUserName().equals(user.getUserName()) )
+					users.add(counter++, user.getUserName());
 			}
 			
 			//Enter Field
@@ -78,7 +75,6 @@ import chat.model.dao.impl.UserDaoImpl;
 			System.out.println(getSendTo());
 			enterField.addActionListener(
 			
-					
 				new ActionListener() {
 					
 					String message;
@@ -94,21 +90,22 @@ import chat.model.dao.impl.UserDaoImpl;
 							displayMessage( "\n" + message );
 						}
 						
-						sendData( getSendTo() + "<<>>" + message );
+						sendMessage( getSendTo() + "<<>>" + message );
 						enterField.setText("");
 					} 
 			});
 			add(enterField, BorderLayout.SOUTH);
 			
 			//User List
-			userList = new JList<Object>(users);
-			userList.addListSelectionListener( new ListSelectionListener() {
+			
+			userJList = new JList<>( users );
+			
+			userJList.addListSelectionListener( new ListSelectionListener() {
 				
 				public void valueChanged(ListSelectionEvent e) {
-					setSendTo(userList.getSelectedValue().toString());
+					setSendTo(userJList.getSelectedValue().toString());
 				}
 			});
-			add(userList, BorderLayout.EAST);
 			
 			//Display Area
 			displayArea = new JTextArea();
@@ -117,7 +114,7 @@ import chat.model.dao.impl.UserDaoImpl;
 			
 			displayPanel = new JPanel();
 			displayPanel.setBackground( Color.white);
-			displayPanel.add(userList);
+			displayPanel.add(userJList);
 			add(displayPanel, BorderLayout.EAST );
 			
 			
@@ -126,8 +123,9 @@ import chat.model.dao.impl.UserDaoImpl;
 				public void windowClosing( WindowEvent event ){
 					try {
 						userDao.setOnline( currentUser, false );
-						sendData("Terminating connection");
-						Thread.sleep(500);
+						sendMessage("Terminating connection");
+						Thread.sleep(10000);
+						System.out.print("\nClosing");
 						closeConnection();
 					} catch (Exception e) {
 					}
@@ -173,25 +171,45 @@ import chat.model.dao.impl.UserDaoImpl;
 		
 		inputStream = new ObjectInputStream( socket.getInputStream() );
 		
+		sendMessage( currentUser.getUserName() );
 	}
 	
 	public void processConnection() throws IOException {
 		
 		enterField.setEditable(true);
-		
+				
 		do {
 			try{
 				message = (String) inputStream.readObject();
-				displayMessage( "\n" + message);
+				if( !message.equals("redraw")){
+					displayMessage( "\n" + message);
+				}
+				else{
+					List<User> onlineList = userDao.onlineList();
+					if(!currentUser.getUserName().equals(onlineList.get(counter))){
+						users.add(counter++, onlineList.get(counter).getUserName());
+					}
+				}
 			}
 			catch (ClassNotFoundException e) {
 				displayMessage("\nUnknown object type received");
 			}
 		} 
-		while (!message.equals("SERVER>>> TERMINATE") );
+		while (!message.equals("TERMINATE") );
 		
 		userDao.setOnline( currentUser, false );
 
+	}
+	
+	public void sendMessage( String message ) {
+		
+		try{
+			outputStream.writeObject( message );
+			outputStream.flush();
+		}
+		catch( IOException e ) {
+			displayMessage( "\nError writing object" );
+		}
 	}
 	
 	public void closeConnection() throws Exception{
@@ -209,18 +227,6 @@ import chat.model.dao.impl.UserDaoImpl;
 		}
 		finally{
 			System.exit(0);	
-		}
-	}
-	
-	public void sendData( String data ) {
-		
-		try{
-			outputStream.writeObject( data );
-			outputStream.flush();
-			
-		}
-		catch( IOException e ) {
-			displayMessage( "\nError writing object" );
 		}
 	}
 	
@@ -251,7 +257,6 @@ import chat.model.dao.impl.UserDaoImpl;
 		try {
 			runClient();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

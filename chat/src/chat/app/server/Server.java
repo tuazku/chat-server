@@ -5,6 +5,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -17,9 +19,6 @@ import javax.swing.JTextArea;
  */
 public class Server extends JFrame{
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 	
 	private ExecutorService executorService = Executors.newCachedThreadPool();
@@ -29,14 +28,15 @@ public class Server extends JFrame{
 	private ObjectOutputStream outputStream;
 	private ObjectInputStream inputStream;
 	
+	private List<NewClient> clientList = new ArrayList<>();
+
 	private ServerSocket server;
-	private Socket connection;
 		
 	private int counter = 0;
-	
+			
 	public Server() {
 		
-		super("Server Application with GUI");
+		super("Server Application");
 		
 		try {
 			server = new ServerSocket( 12345, 10 );
@@ -61,16 +61,34 @@ public class Server extends JFrame{
 			try {
 				Socket connection = server.accept();
 				NewClient newClient = new NewClient( connection );
+				redraw();
 				executorService.execute( newClient );
+				newClient.setClientList(clientList);
 				displayMessage( "\nConnection " + ++counter + " received from " + connection.getInetAddress().getHostAddress() );
+				Thread.sleep(100);
+				clientList.add(newClient);
 			} 
 			catch ( EOFException e) {
 				displayMessage("\nServer terminated connection");
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}	
 		}
 	}
+
+	public void getStreams( Socket socket ){
 		
-	private void closeConnection() {
+		try {
+		     outputStream = new ObjectOutputStream( socket.getOutputStream() );
+		     outputStream.flush();
+		
+		     inputStream = new ObjectInputStream( socket.getInputStream() );
+		}
+		catch ( IOException e) {
+			e.printStackTrace();
+		}
+	}
+	/*private void closeConnection() {
 		
 		displayMessage( "\nTerminating connection\n");
 		
@@ -84,6 +102,7 @@ public class Server extends JFrame{
 		}
 	}
 	
+	
 	private void sendMessage( String message ) {
 		
 		try {
@@ -94,9 +113,33 @@ public class Server extends JFrame{
 		catch (IOException e) {
 			displayArea.append( "Error writing Object" );
 		}
+	}*/
+	public void processConnection() throws IOException {
+		
+		String message = "";
+		
+		try {
+			message = (String)inputStream.readObject();
+			System.out.println( message );
+		}
+		catch ( ClassNotFoundException e ) {
+			
+		}
+		
+	}
+
+	public void getClientInformation( ) throws IOException{
+		processConnection();
 	}
 	
-	private void displayMessage( String message ) {
+	public void displayMessage( String message ) {
 		displayArea.append( message );	
+	}
+	
+	public void redraw() {
+		
+		for( NewClient count : clientList ) {
+			count.sendMessage( "redraw" );
+		}
 	}
 }

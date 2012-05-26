@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * @author Azamat Turgunbaev
@@ -17,7 +20,11 @@ public class NewClient implements Runnable {
 	private ObjectOutputStream outputStream;
 	private ObjectInputStream inputStream;
 	
+	private List<NewClient> clientList = new ArrayList<>();
+	
 	private Socket connection;
+	
+	private String userName;
 	
 	public NewClient( Socket socket ){
 		
@@ -35,6 +42,7 @@ public class NewClient implements Runnable {
 	public void run() {
 			
 		try {
+			getUserInformation();
 			processConnection();
 		} 
 		catch (IOException e) {
@@ -45,14 +53,73 @@ public class NewClient implements Runnable {
 		}
 	}
 	
-	private void getStreams() throws IOException {
+	public void getStreams() throws IOException {
 		
 		outputStream = new ObjectOutputStream( connection.getOutputStream() );
 		outputStream.flush();
 		inputStream = new ObjectInputStream( connection.getInputStream() );
 	}
+
+	public void processConnection() throws IOException {
+		
+		String message = "";
+		
+		do {
+			try {
+				message = (String)inputStream.readObject();
+				
+				StringTokenizer tokens = new StringTokenizer(message, "<<>>" );
+				
+				String receiver = null;
+				
+				if( tokens.hasMoreTokens() ){
+					receiver = tokens.nextToken();
+					if( tokens.hasMoreTokens()) {
+						message = tokens.nextToken();
+					}
+				}
+								
+				NewClient targetClient = null;
+				boolean hasTarget = false;
+								
+				for( NewClient count : clientList ){
+					if( count.getUserName().equals( receiver) ){
+						targetClient = count;
+						hasTarget = true;
+						break;
+					}
+				}
+				
+				if(hasTarget){
+					targetClient.sendMessage( message );
+				}
+			}
+			catch ( ClassNotFoundException e ) {
+				
+			}
+		} while ( !message.equals( "Terminating connection" ));
+		sendMessage("TERMINATE");
+	}
 	
-	private void closeConnection() {
+	public void sendMessage( String message ) {
+		
+		try {
+			outputStream.writeObject( message );
+			outputStream.flush();
+		}
+		catch (IOException e) {
+			
+		}
+	}
+	
+	public void getUserInformation() {
+		try {
+			userName = (String)inputStream.readObject();
+		}
+		catch ( Exception e ) {}
+	}
+	
+	public void closeConnection() {
 		
 		try {
 			outputStream.close();
@@ -63,31 +130,20 @@ public class NewClient implements Runnable {
 			e.printStackTrace();
 		}
 	}
-	
-	private void processConnection() throws IOException {
-		
-		String message = "Connected to server";
-		sendMessage( message );
-		
-		do {
-			try {
-				message = (String)inputStream.readObject();
-				System.out.println( message );
-			}
-			catch ( ClassNotFoundException e ) {
-				
-			}
-		} while ( !message.equals( "Terminating connection" ));
+
+	public String getUserName() {
+		return userName;
 	}
-	
-	private void sendMessage( String message ) {
-		
-		try {
-			outputStream.writeObject( " " + message );
-			outputStream.flush();
-		}
-		catch (IOException e) {
-			
-		}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	public List<NewClient> getClientList() {
+		return clientList;
+	}
+
+	public void setClientList(List<NewClient> clientList) {
+		this.clientList = clientList;
 	}	
 }

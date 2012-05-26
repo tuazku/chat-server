@@ -1,5 +1,6 @@
 package chat.app.client;
 
+import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,7 +10,9 @@ import java.util.concurrent.Executors;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
@@ -22,47 +25,61 @@ import chat.model.dao.impl.UserDaoImpl;
  *
  */
 public class Login extends JFrame{
-	/**
-	 * 
-	 */
+	
 	private static final long serialVersionUID = -8226828221543501499L;
 	
-	ExecutorService executor = Executors.newCachedThreadPool();
+	private ExecutorService executor = Executors.newCachedThreadPool();
+	
+	//GUI FIELDS
+	private JLabel userNameLabel;
+	private JLabel passwordLabel;
 	
 	private JTextField userName;
-	private JPasswordField userPassword;
-	private JButton button;
+	private JPasswordField password;
+
+	private JPanel userNamePanel;
+	private JPanel passwordPanel;
+	
+	private JButton loginButton;
+	private JButton registrationButton;
+	
+	//ACTION FIELDS 
 	private User currentUser;
 	private boolean userFound;
-	
-	private List<User> userList;
-		
-	private UserDao userDao = new UserDaoImpl();
+
+	private List<User> userList;	
+	private UserDao userService = new UserDaoImpl();
 	
 	public Login(){
 		
 		super("Login | Chat Application");
 		setLayout( new FlowLayout() );
-		
-		userName = new JTextField(20);
-		add(userName);
-		
-		userPassword = new JPasswordField(20);
-		add(userPassword);
-		
-		button = new JButton("Login");
-		
-		button.addActionListener( new ActionListener() {
 			
-			@Override
+		userNameLabel = new JLabel( "User Name :" );
+		passwordLabel = new JLabel( "Password  :" );
+		
+		userName = new JTextField(15);	
+		password = new JPasswordField(15);
+		
+		userNamePanel = new JPanel();
+		passwordPanel = new JPanel();
+		
+		userNamePanel.add(userNameLabel, BorderLayout.WEST);
+		userNamePanel.add(userName, BorderLayout.EAST);
+		passwordPanel.add(passwordLabel, BorderLayout.WEST);
+		passwordPanel.add(password, BorderLayout.EAST);
+		
+		loginButton = new JButton("LOGIN");
+		loginButton.addActionListener( new ActionListener() {
+			
 			public void actionPerformed(ActionEvent event) {
 				
-				userList = userDao.listUser();
+				userList = userService.listUser();
 				userFound = false;
 								
 				for( User user : userList ) {
 				
-					if( user.getUserName().equals(userName.getText()) && user.getPassword().equals( new String( userPassword.getPassword() ) ) ){ 	
+					if( user.getUserName().equals(userName.getText()) && user.getPassword().equals( new String( password.getPassword() ) ) ){ 	
 						currentUser = user;
 						userFound = true;
 					}
@@ -75,7 +92,7 @@ public class Login extends JFrame{
 				
 					if( !currentUser.isOnline() ) {
 						
-						userDao.setOnline( currentUser, true );
+						userService.setOnline( currentUser, true );
 						
 						try {
 							setVisible(false);
@@ -98,9 +115,23 @@ public class Login extends JFrame{
 					
 		});
 		
-		add(button);
+		registrationButton = new JButton( "REGISTRATION" );
+		registrationButton.addActionListener( new ActionListener() {
+			
+			public void actionPerformed(ActionEvent arg0) {
+				setVisible(false);
+				Register register = new Register();
+				register.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+				register.setVisible(true);
+			}
+		});
 		
-		setSize( 300, 200);
+		add(userNamePanel);
+		add(passwordPanel);
+		add(loginButton);
+		add(registrationButton);
+		
+		setSize( 320, 200 );
 		setVisible(true);
 	}
-}
+};

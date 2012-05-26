@@ -23,21 +23,17 @@ public class UserDaoImpl implements UserDao{
 	
 	@Override
 	public void register(User user) {
-		try{
-			session.beginTransaction();
-			session.save(user);
-			session.getTransaction().commit();
-		} catch ( Exception e ){
-			e.printStackTrace();
-		}
-		finally{
-			session.close();
-		}
+		
+		session.beginTransaction();
+		session.save(user);
+		session.getTransaction().commit();
+		
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<User> onlineList() {
+		session.beginTransaction();
 		return session.createQuery("from User where online = TRUE").list(); 	 
 	}
 
@@ -49,17 +45,17 @@ public class UserDaoImpl implements UserDao{
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<User> listUser() {
+		
 		session.beginTransaction();
 		list = session.createQuery("from User").list();
 		session.getTransaction().commit();
-		
 		return list;
 	}
 
 	@Override
 	public void setOnline( User user, boolean value ) {
 		
-		user.setOnline(value);
+		user.setOnline( value );
 		
 		session.beginTransaction();
 		session.update(user);

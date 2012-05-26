@@ -113,10 +113,9 @@ import chat.model.dao.impl.UserDaoImpl;
 			add( new JScrollPane(displayArea));
 			
 			displayPanel = new JPanel();
-			displayPanel.setBackground( Color.white);
+			displayPanel.setBackground(Color.white);
 			displayPanel.add(userJList);
 			add(displayPanel, BorderLayout.EAST );
-			
 			
 			this.addWindowListener(new java.awt.event.WindowAdapter() {
 				
@@ -124,10 +123,13 @@ import chat.model.dao.impl.UserDaoImpl;
 					try {
 						userDao.setOnline( currentUser, false );
 						sendMessage("Terminating connection");
-						Thread.sleep(10000);
-						System.out.print("\nClosing");
-						closeConnection();
 					} catch (Exception e) {
+					} finally{
+						try {
+							closeConnection();
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			});
@@ -186,10 +188,8 @@ import chat.model.dao.impl.UserDaoImpl;
 				}
 				else{
 					List<User> onlineList = userDao.onlineList();
-					if(!currentUser.getUserName().equals(onlineList.get(counter))){
 						users.add(counter++, onlineList.get(counter).getUserName());
 					}
-				}
 			}
 			catch (ClassNotFoundException e) {
 				displayMessage("\nUnknown object type received");

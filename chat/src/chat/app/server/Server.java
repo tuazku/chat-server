@@ -55,7 +55,7 @@ public class Server extends JFrame{
 	
 	public void runServer() throws IOException {
 		
-		displayMessage( "Server started" );
+		displayMessage( "Server listening on " + server.getInetAddress().getHostAddress() + ":" + server.getLocalPort() );
 		while( true ) {
 		
 			try {

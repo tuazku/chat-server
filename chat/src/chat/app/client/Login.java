@@ -33,6 +33,7 @@ public class Login extends JFrame{
 	private JPasswordField userPassword;
 	private JButton button;
 	private User currentUser;
+	private boolean userFound;
 	
 	private List<User> userList;
 		
@@ -57,13 +58,24 @@ public class Login extends JFrame{
 			public void actionPerformed(ActionEvent event) {
 				
 				userList = userDao.listUser();
-				
+				userFound = false;
+								
 				for( User user : userList ) {
 				
-					if( user.getUserName().equals(userName.getText()) && user.getPassword().equals( new String( userPassword.getPassword() ) ) ) {
-			
+					if( user.getUserName().equals(userName.getText()) && user.getPassword().equals( new String( userPassword.getPassword() ) ) ){ 	
 						currentUser = user;
-						userDao.setOnline( user, true );
+						userFound = true;
+					}
+				}
+				
+				if( !userFound ) {
+					JOptionPane.showMessageDialog(null, "The user name or password is incorrect");
+				}
+				else {
+				
+					if( !currentUser.isOnline() ) {
+						
+						userDao.setOnline( currentUser, true );
 						
 						try {
 							setVisible(false);
@@ -77,13 +89,13 @@ public class Login extends JFrame{
 						finally{
 							
 						}
-						
 					}
 					else {
-						JOptionPane.showMessageDialog(null,"The user name or password is incorrect");
-					}
-				}		
+						JOptionPane.showMessageDialog(null, "This user is already authorized");
+					}					
+				}					
 			}
+					
 		});
 		
 		add(button);

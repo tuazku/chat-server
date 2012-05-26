@@ -77,7 +77,7 @@ public class NewClient implements Runnable {
 			catch ( ClassNotFoundException e ) {
 				
 			}
-		} while ( !message.equals( "TERMINATE" ));
+		} while ( !message.equals( "Terminating connection" ));
 	}
 	
 	private void sendMessage( String message ) {

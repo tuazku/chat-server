@@ -25,21 +25,17 @@ import chat.model.User;
 import chat.model.dao.UserDao;
 import chat.model.dao.impl.UserDaoImpl;
 
-
 /**
  * @author Azamat Turgunbaev
  *
  */
 	public class Client extends JFrame implements Runnable{
-	
-		/**
-		 * 
-		 */
+		
 		private static final long serialVersionUID = 1L;
 		
 		private JTextField enterField;
 		private JTextArea displayArea;
-		private JList userList;
+		private JList<?> userList;
 		private JPanel displayPanel;
 		
 		private ObjectOutputStream outputStream;
@@ -64,10 +60,18 @@ import chat.model.dao.impl.UserDaoImpl;
 			List<User> usersList = getOnlineUsers();
 			int count = usersList.size();
 			String users[] = new String[count];
-						
-			for( User user : usersList )
-				users[--count] = user.getName() + " " + user.getSurname();
-				
+			
+			for( User user : usersList ) {
+				if( !currentUser.getUserName().equals(user.getUserName()))
+					users[--count] = user.getName() + " " + user.getSurname();
+				else
+					continue;
+			}
+			
+			if( count == usersList.size() ){
+				users[--count] = "Nobody to talk";
+			}
+			
 			//Enter Field
 			enterField = new JTextField();
 			enterField.setEditable(false);
@@ -97,7 +101,7 @@ import chat.model.dao.impl.UserDaoImpl;
 			add(enterField, BorderLayout.SOUTH);
 			
 			//User List
-			userList = new JList(users);
+			userList = new JList<Object>(users);
 			userList.addListSelectionListener( new ListSelectionListener() {
 				
 				public void valueChanged(ListSelectionEvent e) {
@@ -116,12 +120,13 @@ import chat.model.dao.impl.UserDaoImpl;
 			displayPanel.add(userList);
 			add(displayPanel, BorderLayout.EAST );
 			
+			
 			this.addWindowListener(new java.awt.event.WindowAdapter() {
 				
 				public void windowClosing( WindowEvent event ){
 					try {
 						userDao.setOnline( currentUser, false );
-						sendData("TERMINATE");
+						sendData("Terminating connection");
 						Thread.sleep(500);
 						closeConnection();
 					} catch (Exception e) {
@@ -223,7 +228,7 @@ import chat.model.dao.impl.UserDaoImpl;
 		displayArea.append(message);
 	}
 	
-	public List getOnlineUsers(){
+	public List<User> getOnlineUsers(){
 		
 		UserDao userDao = new UserDaoImpl();
 		List<User> userList = new ArrayList<User>();

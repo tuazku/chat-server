@@ -53,9 +53,10 @@ public class Register extends JFrame{
 	private JButton registerButton;
 	
 	//ACTION FIELDS
-	User newUser;
-	List<User> userList = new ArrayList<>();
-	UserDao userService = new UserDaoImpl();
+	private User newUser;
+	private List<User> userList = new ArrayList<>();
+	private UserDao userService = new UserDaoImpl();
+	private boolean canRegister;
 	
 	public Register() {
 		
@@ -97,7 +98,11 @@ public class Register extends JFrame{
 			
 			public void actionPerformed(ActionEvent arg0) {
 			
-				validateFormFields();	
+				try {
+					validateFormFields();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}	
 			}
 		});
 		
@@ -112,7 +117,9 @@ public class Register extends JFrame{
 		setVisible(true);
 	}
 	
-	public void validateFormFields() {
+	public void validateFormFields() throws Exception {
+		
+		userList = userService.listUser();
 		
 		if( name.getText().isEmpty() ) {
 			JOptionPane.showMessageDialog(null, "\"Name\" field is not filled" );
@@ -133,6 +140,15 @@ public class Register extends JFrame{
 			if( new String(password.getPassword()).equals( new String(passwordConfirm.getPassword()))) {	
 				createNewUser();
 				validateNewUser();
+				if( canRegister ) {
+					userService.register(newUser);
+					setVisible(false);
+					
+					Client client = new Client("127.0.0.1", newUser );
+					client.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+					client.setVisible( true );
+					executorService.execute(client);
+				}
 			}
 			else {
 				new JOptionPane();
@@ -153,39 +169,22 @@ public class Register extends JFrame{
 	}
 	
 	public void validateNewUser() {
-		
-		userList = userService.listUser();
+			
+		canRegister = true;
 		
 		if( userList.isEmpty() ) {
 			userService.register(newUser);
-			creatClient();
+			JOptionPane.showMessageDialog(null, "Registration successfull. You can authorize yoursef.");
+			setVisible(false);
 		}
 		else {
 			for( User user : userList ) {
 				if( user.getUserName().equals(newUser.getUserName())) {
 					JOptionPane.showMessageDialog(null, "This \"User Name\" already in use.\nPlease use another \"User Name\"" );
-				} 
-				else {
-					userService.register(newUser);
-					creatClient();
-				}		
+					canRegister = false;
+					break;
+				} 	
 			}
 		}
-	}
-	
-	public void creatClient() {
-		
-		setVisible(false);
-		
-		try {
-			Client client = new Client( "localhost", newUser );
-			client.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
-			client.setVisible(true);
-			executorService.execute(client);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		
 	}
 }

@@ -22,6 +22,8 @@ public class NewClient implements Runnable {
 	
 	private List<NewClient> clientList = new ArrayList<>();
 	
+	private Server server;
+	
 	private Socket connection;
 	
 	private String userName;
@@ -67,7 +69,7 @@ public class NewClient implements Runnable {
 		do {
 			try {
 				message = (String)inputStream.readObject();
-				
+				System.out.println(message);
 				StringTokenizer tokens = new StringTokenizer(message, "<<>>" );
 				
 				String receiver = null;
@@ -75,7 +77,7 @@ public class NewClient implements Runnable {
 				if( tokens.hasMoreTokens() ){
 					receiver = tokens.nextToken();
 					if( tokens.hasMoreTokens()) {
-						message = tokens.nextToken();
+						message = tokens.nextToken();	
 					}
 				}
 								
@@ -145,5 +147,13 @@ public class NewClient implements Runnable {
 
 	public void setClientList(List<NewClient> clientList) {
 		this.clientList = clientList;
+	}
+
+	public Server getServer() {
+		return server;
+	}
+
+	public void setServer(Server server) {
+		this.server = server;
 	}	
 }

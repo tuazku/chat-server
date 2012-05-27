@@ -28,7 +28,7 @@ public class Server extends JFrame{
 	private ObjectOutputStream outputStream;
 	private ObjectInputStream inputStream;
 	
-	private List<NewClient> clientList = new ArrayList<>();
+	public List<NewClient> clientList = new ArrayList<>();
 
 	private ServerSocket server;
 		

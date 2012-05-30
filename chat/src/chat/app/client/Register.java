@@ -144,10 +144,10 @@ public class Register extends JFrame{
 					userService.register(newUser);
 					setVisible(false);
 					
-					Client client = new Client("127.0.0.1", newUser );
+					/*Client client = new Client("127.0.0.1", newUser );
 					client.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 					client.setVisible( true );
-					executorService.execute(client);
+					executorService.execute(client);*/
 				}
 			}
 			else {

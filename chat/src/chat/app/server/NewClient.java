@@ -7,9 +7,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+
+import chat.model.User;
+import chat.model.dao.UserDao;
+import chat.model.dao.impl.UserDaoImpl;
 
 /**
  * @author Azamat Turgunbaev
@@ -20,13 +23,15 @@ public class NewClient implements Runnable {
 	private ObjectOutputStream outputStream;
 	private ObjectInputStream inputStream;
 	
-	private List<NewClient> clientList = new ArrayList<>();
+	private List<NewClient> clientList;
+	private List<User> userList;	
+	private List<User> onlineList;
+	private String onlineClients = "";
 	
-	private Server server;
+	private UserDao userService = new UserDaoImpl();
+	private User user;
 	
 	private Socket connection;
-	
-	private String userName;
 	
 	public NewClient( Socket socket ){
 		
@@ -44,7 +49,6 @@ public class NewClient implements Runnable {
 	public void run() {
 			
 		try {
-			getUserInformation();
 			processConnection();
 		} 
 		catch (IOException e) {
@@ -69,37 +73,41 @@ public class NewClient implements Runnable {
 		do {
 			try {
 				message = (String)inputStream.readObject();
-				StringTokenizer tokens = new StringTokenizer(message, "<<>>" );
+				StringTokenizer tokens = new StringTokenizer( message, "<<>>" );
 				
-				String receiver = null;
-				
-				if( tokens.hasMoreTokens() ){
-					receiver = tokens.nextToken();
-					if( tokens.hasMoreTokens()) {
-						message = tokens.nextToken();	
-					}
+				if( tokens.countTokens() == 2 ) {
+					loginUser( tokens );
 				}
-								
-				NewClient targetClient = null;
-				boolean hasTarget = false;
-								
-				for( NewClient count : clientList ){
-					if( count.getUserName().equals( receiver) ){
-						targetClient = count;
-						hasTarget = true;
-						break;
+				else {
+					String receiver = null;
+					
+					if( tokens.hasMoreTokens() ){
+						receiver = tokens.nextToken();
+						if( tokens.hasMoreTokens()) {
+							message = tokens.nextToken();	
+						}
 					}
-				}
-				
-				if(hasTarget){
-					targetClient.sendMessage( message );
+									
+					NewClient targetClient = null;
+					boolean hasTarget = false;
+									
+					for( NewClient count : clientList ){
+						if( ( user.getName() + " " + user.getSurname()).equals( receiver) ){
+							targetClient = count;
+							hasTarget = true;
+							break;
+						}
+					}
+					
+					if(hasTarget){
+						targetClient.sendMessage( message );
+					}
 				}
 			}
 			catch ( ClassNotFoundException e ) {
 				
 			}
 		} while ( !message.equals( "TERMINATE" ));
-		sendMessage("TERMINATE");
 	}
 	
 	public void sendMessage( String message ) {
@@ -113,11 +121,15 @@ public class NewClient implements Runnable {
 		}
 	}
 	
-	public void getUserInformation() {
+	public void sendOnlineList( String command, String[] list ) {
+		
 		try {
-			userName = (String)inputStream.readObject();
+			outputStream.writeObject( command + "<<>>" + list);
+			outputStream.flush();
 		}
-		catch ( Exception e ) {}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void closeConnection() {
@@ -131,15 +143,62 @@ public class NewClient implements Runnable {
 			e.printStackTrace();
 		}
 	}
-
-	public String getUserName() {
-		return userName;
+	
+	public void loginUser( StringTokenizer tokens ) throws ClassNotFoundException, IOException {
+		
+		boolean userFound = false;
+		String loginInfo[] = new String[2];
+		
+		for( int i = 0; i < 2; i++ ) {
+			loginInfo[i] = tokens.nextToken();
+		}
+		
+		userList = userService.listUser();
+		
+		for( User user : userList ) {
+						
+			if( user.getUserName().equals( loginInfo[0] ) && user.getPassword().equals( loginInfo[1] ) ){ 	
+				this.user = user;
+				userFound = true;
+				break;
+			}
+		}
+		
+		if( userFound ) {
+			login( user );
+		}
+		else {
+			sendMessage( "NOT FOUND" );
+		}
 	}
-
-	public void setUserName(String userName) {
-		this.userName = userName;
+	
+	public void login( User user ) {
+	
+		if( !user.isOnline() ) {
+			userService.setOnline(user, true);
+			getOnlineList();
+			sendMessage( onlineClients );
+			sendMessage( user.getName() + "<<>>" + user.getSurname() );
+		}
+		else {
+			sendMessage( "ONLINE" );
+		}
 	}
-
+	
+	public void getOnlineList() {
+		
+		int counter = 0;
+		onlineList = userService.onlineList();
+		
+		for( User user : onlineList ) {
+			if( counter < onlineList.size() )
+				onlineClients += user.getName() + " " + user.getSurname() + "<<>>";
+			else
+				onlineClients += user.getName() + " " + user.getSurname();
+		}
+		System.out.println( onlineClients );
+	}
+	
 	public List<NewClient> getClientList() {
 		return clientList;
 	}
@@ -147,13 +206,5 @@ public class NewClient implements Runnable {
 	public void setClientList(List<NewClient> clientList) {
 		this.clientList = null;
 		this.clientList = clientList;
-	}
-
-	public Server getServer() {
-		return server;
-	}
-
-	public void setServer(Server server) {
-		this.server = server;
 	}	
 }

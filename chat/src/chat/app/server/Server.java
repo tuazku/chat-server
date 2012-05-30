@@ -90,32 +90,7 @@ public class Server extends JFrame{
 			e.printStackTrace();
 		}
 	}
-	/*private void closeConnection() {
-		
-		displayMessage( "\nTerminating connection\n");
-		
-		try {
-			outputStream.close();
-			inputStream.close();
-			connection.close();
-		} 
-		catch( IOException e ) {
-			e.printStackTrace();
-		}
-	}
 	
-	
-	private void sendMessage( String message ) {
-		
-		try {
-			outputStream.writeObject( "SERVER>>> " + message );
-			outputStream.flush();
-			displayMessage( "\nSERVER>>> " + message );
-		}
-		catch (IOException e) {
-			displayArea.append( "Error writing Object" );
-		}
-	}*/
 	public void processConnection() throws IOException {
 		
 		String message = "";

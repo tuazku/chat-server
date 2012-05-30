@@ -69,7 +69,6 @@ public class NewClient implements Runnable {
 		do {
 			try {
 				message = (String)inputStream.readObject();
-				System.out.println(message);
 				StringTokenizer tokens = new StringTokenizer(message, "<<>>" );
 				
 				String receiver = null;
@@ -99,7 +98,7 @@ public class NewClient implements Runnable {
 			catch ( ClassNotFoundException e ) {
 				
 			}
-		} while ( !message.equals( "Terminating connection" ));
+		} while ( !message.equals( "TERMINATE" ));
 		sendMessage("TERMINATE");
 	}
 	
@@ -146,6 +145,7 @@ public class NewClient implements Runnable {
 	}
 
 	public void setClientList(List<NewClient> clientList) {
+		this.clientList = null;
 		this.clientList = clientList;
 	}
 

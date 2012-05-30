@@ -122,11 +122,12 @@ import chat.model.dao.impl.UserDaoImpl;
 				public void windowClosing( WindowEvent event ){
 					try {
 						userDao.setOnline( currentUser, false );
-						sendMessage("Terminating connection");
+						sendMessage("TERMINATE");
 					} catch (Exception e) {
+						
 					} finally{
 						try {
-							closeConnection();
+							closeConnection();							
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -188,8 +189,8 @@ import chat.model.dao.impl.UserDaoImpl;
 				}
 				else{
 					List<User> onlineList = userDao.onlineList();
-						users.add(counter++, onlineList.get(counter).getUserName());
-					}
+					users.add(counter++, onlineList.get(counter).getUserName());
+				}
 			}
 			catch (ClassNotFoundException e) {
 				displayMessage("\nUnknown object type received");

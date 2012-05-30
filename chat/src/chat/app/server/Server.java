@@ -63,10 +63,12 @@ public class Server extends JFrame{
 				NewClient newClient = new NewClient( connection );
 				redraw();
 				executorService.execute( newClient );
-				newClient.setClientList(clientList);
+				clientList.add(newClient);
+				for( NewClient client : clientList ) {
+					client.setClientList(clientList);
+				}
 				displayMessage( "\nConnection " + ++counter + " received from " + connection.getInetAddress().getHostAddress() );
 				Thread.sleep(100);
-				clientList.add(newClient);
 			} 
 			catch ( EOFException e) {
 				displayMessage("\nServer terminated connection");

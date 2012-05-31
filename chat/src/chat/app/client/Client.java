@@ -8,7 +8,9 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
@@ -38,28 +40,34 @@ import chat.model.dao.impl.UserDaoImpl;
 		private JList<?> userJList;
 		private JPanel displayPanel;
 		
-		private ObjectOutputStream outputStream, output;
-		private ObjectInputStream inputStream, input;
+		private ObjectOutputStream outputStream;
+		private ObjectInputStream inputStream;
 		
 		private UserDao userDao = new UserDaoImpl();
 		private User currentUser;
 		
 		private DefaultListModel<String> users = new DefaultListModel<>();
 		private String message = null;
+		private String server;
 		private Socket socket;
 		
 		private int counter = 0;
 	
 		private String sendTo = "";
-		private String[] onlineList;
 		
-		public Client( Socket socket, ObjectOutputStream output, ObjectInputStream input, final String nameSurname, String[] onlineList ) throws Exception {
+		public Client( String host, User newUser ) throws Exception {
 			
-			super("Client | " + nameSurname );
-			this.socket = socket;
-			this.setOnlineList(onlineList);
-			this.output = output;
-			this.input = input;
+			super("Client | " + newUser.getName() + " " + newUser.getSurname() );
+			
+			currentUser = newUser;
+			server = host;	
+			
+			List<User> onlineList = getOnlineUsers();
+			
+			for( User user : onlineList ) {
+				if( !currentUser.getUserName().equals(user.getUserName()) )
+					users.add(counter++, user.getUserName());
+			}
 			
 			//Enter Field
 			enterField = new JTextField();
@@ -74,11 +82,11 @@ import chat.model.dao.impl.UserDaoImpl;
 					public void actionPerformed(ActionEvent event) {
 						
 						if( getSendTo() == "" ){
-							message = nameSurname +  " :\n   " + event.getActionCommand();
+							message = (currentUser.getName() + " " + currentUser.getSurname() + " :\n   ") + event.getActionCommand();
 							displayMessage( "\n" + message );
 						}
 						else{
-							message = nameSurname + " :\n   " + event.getActionCommand();
+							message = currentUser.getName() + " " + currentUser.getSurname() + " :\n   " + event.getActionCommand();
 							displayMessage( "\n" + message );
 						}
 						
@@ -90,14 +98,14 @@ import chat.model.dao.impl.UserDaoImpl;
 			
 			//User List
 			
-			userJList = new JList<>( onlineList );
+			userJList = new JList<>( users );
 			
 			userJList.addListSelectionListener( new ListSelectionListener() {
 				
 				public void valueChanged(ListSelectionEvent e) {
 					setSendTo(userJList.getSelectedValue().toString());
 				}
-			});		
+			});
 			
 			//Display Area
 			displayArea = new JTextArea();
@@ -126,22 +134,15 @@ import chat.model.dao.impl.UserDaoImpl;
 					}
 				}
 			});
+						
 			setSize(400, 400);
-			setVisible(true);				
+			setVisible(true);	
 		}
 	
-		@Override
-		public void run() {
-			try {	
-				runClient();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}	
-		}
-		
-		public void runClient() throws Exception {
+	public void runClient() throws Exception {
 		
 		try {
+			connectToServer();
 			getStreams();
 			processConnection();
 		} 
@@ -157,14 +158,23 @@ import chat.model.dao.impl.UserDaoImpl;
 		
 	}
 	
+	public void connectToServer() throws IOException{
+		
+		displayMessage( "Attempting to connect to server\n" );
+		
+		socket = new Socket( InetAddress.getByName(server), 12345 );
+		
+		displayMessage( "Connected to " + socket.getInetAddress().getHostName());
+	}
+	
 	public void getStreams() throws IOException {
 		
-		outputStream = output;
+		outputStream = new ObjectOutputStream( socket.getOutputStream() );
 		outputStream.flush();
 		
-		inputStream = input;
+		inputStream = new ObjectInputStream( socket.getInputStream() );
 		
-		//sendMessage( currentUser.getUserName() );
+		sendMessage( currentUser.getUserName() );
 	}
 	
 	public void processConnection() throws IOException {
@@ -225,6 +235,16 @@ import chat.model.dao.impl.UserDaoImpl;
 		displayArea.append(message);
 	}
 	
+	public List<User> getOnlineUsers(){
+		
+		UserDao userDao = new UserDaoImpl();
+		List<User> userList = new ArrayList<User>();
+		
+		userList = userDao.onlineList();
+		
+		return userList;
+	}
+
 	public String getSendTo() {
 		return sendTo;
 	}
@@ -233,11 +253,13 @@ import chat.model.dao.impl.UserDaoImpl;
 		this.sendTo = sendTo;
 	}
 
-	public String[] getOnlineList() {
-		return onlineList;
-	}
-
-	public void setOnlineList(String[] onlineList) {
-		this.onlineList = onlineList;
+	@Override
+	public void run() {
+		try {
+			runClient();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 	}
 }

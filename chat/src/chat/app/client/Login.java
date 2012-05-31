@@ -4,12 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.util.StringTokenizer;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,15 +16,19 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
+import chat.model.User;
+import chat.model.dao.UserDao;
+import chat.model.dao.impl.UserDaoImpl;
+
 /**
  * @author Azamat Turgunbaev
  *
  */
-public class Login extends JFrame implements Runnable{
+public class Login extends JFrame{
 	
 	private static final long serialVersionUID = -8226828221543501499L;
 	
-	private ExecutorService executorService = Executors.newCachedThreadPool();
+	private ExecutorService executor = Executors.newCachedThreadPool();
 	
 	//GUI FIELDS
 	private JLabel userNameLabel;
@@ -45,26 +44,17 @@ public class Login extends JFrame implements Runnable{
 	private JButton registrationButton;
 	
 	//ACTION FIELDS 
-	private String[] clientList;
-	private String server;
-	private Socket socket;
-	private ObjectOutputStream outputStream;
-	private ObjectInputStream inputStream;
+	private User currentUser;
+	private boolean userFound;
+
+	private List<User> userList;	
+	private UserDao userService = new UserDaoImpl();
 	
-	public Login( String host ){
+	public Login(){
 		
 		super("Login | Chat Application");
 		setLayout( new FlowLayout() );
-		
-		server = host;
-		
-		try {
-			connectToServer();
-			getStreams();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
+			
 		userNameLabel = new JLabel( "User Name :" );
 		passwordLabel = new JLabel( "Password  :" );
 		
@@ -78,50 +68,51 @@ public class Login extends JFrame implements Runnable{
 		userNamePanel.add(userName, BorderLayout.EAST);
 		passwordPanel.add(passwordLabel, BorderLayout.WEST);
 		passwordPanel.add(password, BorderLayout.EAST);
-				
+		
 		loginButton = new JButton("LOGIN");
 		loginButton.addActionListener( new ActionListener() {
 			
 			public void actionPerformed(ActionEvent event) {
-										
-				sendMessage( userName.getText() + "<<>>" + new String( password.getPassword() ) );
 				
-				try {
-					String message = (String) inputStream.readObject();
-					System.out.println();
-					StringTokenizer tokens = new StringTokenizer( message, "<<>>");
+				userList = userService.listUser();
+				userFound = false;
+								
+				for( User user : userList ) {
+				
+					if( user.getUserName().equals(userName.getText()) && user.getPassword().equals( new String( password.getPassword() ) ) ){ 	
+						currentUser = user;
+						userFound = true;
+					}
+				}
+				
+				if( !userFound ) {
+					JOptionPane.showMessageDialog(null, "The user name or password is incorrect");
+				}
+				else {
+				
+					if( !currentUser.isOnline() ) {
 						
-					String answer = null;
-					
-					if( tokens.hasMoreTokens() ) {
-						answer = tokens.nextToken();
-					}
-					
-					if( answer.equals( "ONLINE" ) ) {
-						JOptionPane.showMessageDialog(null, "This user is already authorized");
-					}
-					else if( answer.equals( "NOT FOUND") ) {
-						JOptionPane.showMessageDialog(null, "The user name or password is incorrect");
+						userService.setOnline( currentUser, true );
+						
+						try {
+							setVisible(false);
+							Client client = new Client("127.0.0.1", currentUser );
+							client.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);	
+							executor.execute(client);
+						} 
+						catch (Exception e1) {
+							e1.printStackTrace();
+						}
+						finally{
+							
+						}
 					}
 					else {
-						String nameSurname = answer;					
-						clientList = new String[tokens.countTokens()];
-						int counter = 0;
-						
-						while( tokens.hasMoreTokens() ) {
-							clientList[ counter++ ] = tokens.nextToken();
-						}
-						
-						setVisible(false);
-						Client client = new Client( socket, outputStream, inputStream, nameSurname, clientList );
-						client.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-						client.setVisible(true);
-						executorService.execute(client);					
+						JOptionPane.showMessageDialog(null, "This user is already authorized");
 					}					
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				}					
 			}
+					
 		});
 		
 		registrationButton = new JButton( "REGISTRATION" );
@@ -143,47 +134,4 @@ public class Login extends JFrame implements Runnable{
 		setSize( 320, 200 );
 		setVisible(true);
 	}
-	
-	public void connectToServer() throws IOException{
-		
-		socket = new Socket( InetAddress.getByName(server), 12345 );		
-	}
-	
-	public void getStreams() throws IOException {
-		
-		outputStream = new ObjectOutputStream( socket.getOutputStream() );
-		outputStream.flush();
-		
-		inputStream = new ObjectInputStream( socket.getInputStream() );
-	}
-	
-	public void closeConnection() throws Exception{
-		
-		try{
-			outputStream.close();
-			inputStream.close();
-			socket.close();
-		}
-		catch( IOException e ) {
-			e.printStackTrace();
-		}
-		finally{
-			System.exit(0);	
-		}
-	}
-
-	public void sendMessage( String message ) {
-		
-		try {
-			outputStream.writeObject( message );
-			outputStream.flush();
-		} catch (IOException e) {
-			System.out.println( "Error writing object" );
-		}
-	}
-
-	@Override
-	public void run() {
-				
-	}
-}
+};

@@ -20,6 +20,8 @@ public class UserDaoImpl implements UserDao{
 		
 	SessionFactory factory = new Configuration().configure().buildSessionFactory();
 	Session session = factory.openSession();
+
+	private User user;
 	
 	@Override
 	public void register(User user) {
@@ -61,7 +63,24 @@ public class UserDaoImpl implements UserDao{
 		session.update(user);
 		session.getTransaction().commit();
 	}
-	
-	
 
+	@Override
+	public void setOnlineByName(String userName, boolean value) {
+		
+		session.beginTransaction();
+		list = session.createQuery("from User where online = TRUE").list();
+		
+		for( User user : list ) {
+			if( user.getUserName().equals(userName)) {
+				this.user = user;
+				break;
+			}
+		}
+		
+		user.setOnline(false);
+		
+		session.beginTransaction();
+		session.update(user);
+		session.getTransaction().commit();
+	}
 }

@@ -196,7 +196,7 @@ import chat.model.dao.impl.UserDaoImpl;
 				displayMessage("\nUnknown object type received");
 			}
 		} 
-		while (!message.equals("TERMINATE") );
+		while (!message.contains("TERMINATE-CLIENT") );
 		
 		userDao.setOnline( currentUser, false );
 

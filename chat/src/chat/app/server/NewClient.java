@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import chat.model.dao.UserDao;
+import chat.model.dao.impl.UserDaoImpl;
+
 /**
  * @author Azamat Turgunbaev
  *
@@ -21,6 +24,7 @@ public class NewClient implements Runnable {
 	private ObjectInputStream inputStream;
 	
 	private List<NewClient> clientList = new ArrayList<>();
+	private UserDao userDao = new UserDaoImpl();
 	
 	private Server server;
 	
@@ -46,6 +50,7 @@ public class NewClient implements Runnable {
 		try {
 			getUserInformation();
 			processConnection();
+			closeConnection();
 		} 
 		catch (IOException e) {
 			e.printStackTrace();
@@ -79,7 +84,7 @@ public class NewClient implements Runnable {
 						message = tokens.nextToken();	
 					}
 				}
-								
+							
 				NewClient targetClient = null;
 				boolean hasTarget = false;
 								
@@ -98,8 +103,9 @@ public class NewClient implements Runnable {
 			catch ( ClassNotFoundException e ) {
 				
 			}
-		} while ( !message.equals( "TERMINATE" ));
-		sendMessage("TERMINATE");
+		} while ( !message.contains( "TERMINATE" ));
+		sendMessage("TERMINATE-CLIENT");
+		userDao.setOnlineByName( userName, false);
 	}
 	
 	public void sendMessage( String message ) {

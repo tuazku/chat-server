@@ -38,8 +38,8 @@ import chat.model.dao.impl.UserDaoImpl;
 		private JList<?> userJList;
 		private JPanel displayPanel;
 		
-		private ObjectOutputStream outputStream;
-		private ObjectInputStream inputStream;
+		private ObjectOutputStream outputStream, output;
+		private ObjectInputStream inputStream, input;
 		
 		private UserDao userDao = new UserDaoImpl();
 		private User currentUser;
@@ -53,13 +53,14 @@ import chat.model.dao.impl.UserDaoImpl;
 		private String sendTo = "";
 		private String[] onlineList;
 		
-		public Client( Socket socket, String name, String surname, String[] onlineList ) throws Exception {
+		public Client( Socket socket, ObjectOutputStream output, ObjectInputStream input, final String nameSurname, String[] onlineList ) throws Exception {
 			
-			super("Client | " + name + " " + surname );
-			
+			super("Client | " + nameSurname );
 			this.socket = socket;
 			this.setOnlineList(onlineList);
-					
+			this.output = output;
+			this.input = input;
+			
 			//Enter Field
 			enterField = new JTextField();
 			enterField.setEditable(false);
@@ -73,11 +74,11 @@ import chat.model.dao.impl.UserDaoImpl;
 					public void actionPerformed(ActionEvent event) {
 						
 						if( getSendTo() == "" ){
-							message = (currentUser.getName() + " " + currentUser.getSurname() + " :\n   ") + event.getActionCommand();
+							message = nameSurname +  " :\n   " + event.getActionCommand();
 							displayMessage( "\n" + message );
 						}
 						else{
-							message = currentUser.getName() + " " + currentUser.getSurname() + " :\n   " + event.getActionCommand();
+							message = nameSurname + " :\n   " + event.getActionCommand();
 							displayMessage( "\n" + message );
 						}
 						
@@ -96,7 +97,7 @@ import chat.model.dao.impl.UserDaoImpl;
 				public void valueChanged(ListSelectionEvent e) {
 					setSendTo(userJList.getSelectedValue().toString());
 				}
-			});
+			});		
 			
 			//Display Area
 			displayArea = new JTextArea();
@@ -125,12 +126,20 @@ import chat.model.dao.impl.UserDaoImpl;
 					}
 				}
 			});
-						
 			setSize(400, 400);
-			setVisible(true);	
+			setVisible(true);				
 		}
 	
-	public void runClient() throws Exception {
+		@Override
+		public void run() {
+			try {	
+				runClient();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}	
+		}
+		
+		public void runClient() throws Exception {
 		
 		try {
 			getStreams();
@@ -150,12 +159,12 @@ import chat.model.dao.impl.UserDaoImpl;
 	
 	public void getStreams() throws IOException {
 		
-		outputStream = new ObjectOutputStream( socket.getOutputStream() );
+		outputStream = output;
 		outputStream.flush();
 		
-		inputStream = new ObjectInputStream( socket.getInputStream() );
+		inputStream = input;
 		
-		sendMessage( currentUser.getUserName() );
+		//sendMessage( currentUser.getUserName() );
 	}
 	
 	public void processConnection() throws IOException {
@@ -222,15 +231,6 @@ import chat.model.dao.impl.UserDaoImpl;
 
 	public void setSendTo(String sendTo) {
 		this.sendTo = sendTo;
-	}
-
-	@Override
-	public void run() {
-		try {
-			runClient();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}	
 	}
 
 	public String[] getOnlineList() {

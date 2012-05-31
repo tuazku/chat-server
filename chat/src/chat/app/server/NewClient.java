@@ -49,9 +49,12 @@ public class NewClient implements Runnable {
 	public void run() {
 			
 		try {
+			loginUser();
 			processConnection();
 		} 
 		catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 		finally {
@@ -75,33 +78,28 @@ public class NewClient implements Runnable {
 				message = (String)inputStream.readObject();
 				StringTokenizer tokens = new StringTokenizer( message, "<<>>" );
 				
-				if( tokens.countTokens() == 2 ) {
-					loginUser( tokens );
+				String receiver = null;
+					
+				if( tokens.hasMoreTokens() ){
+					receiver = tokens.nextToken();
+					if( tokens.hasMoreTokens()) {
+						message = tokens.nextToken();	
+					}
 				}
-				else {
-					String receiver = null;
-					
-					if( tokens.hasMoreTokens() ){
-						receiver = tokens.nextToken();
-						if( tokens.hasMoreTokens()) {
-							message = tokens.nextToken();	
-						}
-					}
 									
-					NewClient targetClient = null;
-					boolean hasTarget = false;
-									
-					for( NewClient count : clientList ){
-						if( ( user.getName() + " " + user.getSurname()).equals( receiver) ){
-							targetClient = count;
-							hasTarget = true;
-							break;
-						}
+				NewClient targetClient = null;
+				boolean hasTarget = false;
+								
+				for( NewClient count : clientList ){
+					if( ( user.getName() + " " + user.getSurname()).equals( receiver) ){
+						targetClient = count;
+						hasTarget = true;
+						break;
 					}
-					
-					if(hasTarget){
-						targetClient.sendMessage( message );
-					}
+				}
+				
+				if(hasTarget){
+					targetClient.sendMessage( message );
 				}
 			}
 			catch ( ClassNotFoundException e ) {
@@ -121,17 +119,6 @@ public class NewClient implements Runnable {
 		}
 	}
 	
-	public void sendOnlineList( String command, String[] list ) {
-		
-		try {
-			outputStream.writeObject( command + "<<>>" + list);
-			outputStream.flush();
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
 	public void closeConnection() {
 		
 		try {
@@ -144,7 +131,17 @@ public class NewClient implements Runnable {
 		}
 	}
 	
-	public void loginUser( StringTokenizer tokens ) throws ClassNotFoundException, IOException {
+	public void loginUser( ) throws ClassNotFoundException, IOException {
+		
+		String message = "";
+		
+		try {
+			message = (String) inputStream.readObject();
+		} catch ( IOException e) {
+			e.printStackTrace();
+		}
+		
+		StringTokenizer tokens = new StringTokenizer(message, "<<>>");
 		
 		boolean userFound = false;
 		String loginInfo[] = new String[2];
@@ -152,7 +149,8 @@ public class NewClient implements Runnable {
 		for( int i = 0; i < 2; i++ ) {
 			loginInfo[i] = tokens.nextToken();
 		}
-		
+	
+		getOnlineList();
 		userList = userService.listUser();
 		
 		for( User user : userList ) {
@@ -163,7 +161,7 @@ public class NewClient implements Runnable {
 				break;
 			}
 		}
-		
+			
 		if( userFound ) {
 			login( user );
 		}
@@ -172,13 +170,11 @@ public class NewClient implements Runnable {
 		}
 	}
 	
-	public void login( User user ) {
+	public void login( User user ) throws IOException {
 	
 		if( !user.isOnline() ) {
 			userService.setOnline(user, true);
-			getOnlineList();
-			sendMessage( onlineClients );
-			sendMessage( user.getName() + "<<>>" + user.getSurname() );
+			sendMessage( user.getName() + " " + user.getSurname() + "<<>>" + onlineClients );
 		}
 		else {
 			sendMessage( "ONLINE" );
@@ -191,12 +187,14 @@ public class NewClient implements Runnable {
 		onlineList = userService.onlineList();
 		
 		for( User user : onlineList ) {
-			if( counter < onlineList.size() )
+			if( counter < onlineList.size() - 1) {
 				onlineClients += user.getName() + " " + user.getSurname() + "<<>>";
-			else
+				counter++;
+			}
+			else {
 				onlineClients += user.getName() + " " + user.getSurname();
+			}
 		}
-		System.out.println( onlineClients );
 	}
 	
 	public List<NewClient> getClientList() {

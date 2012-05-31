@@ -25,7 +25,7 @@ import javax.swing.JTextField;
  * @author Azamat Turgunbaev
  *
  */
-public class Login extends JFrame{
+public class Login extends JFrame implements Runnable{
 	
 	private static final long serialVersionUID = -8226828221543501499L;
 	
@@ -45,7 +45,6 @@ public class Login extends JFrame{
 	private JButton registrationButton;
 	
 	//ACTION FIELDS 
-	
 	private String[] clientList;
 	private String server;
 	private Socket socket;
@@ -85,54 +84,40 @@ public class Login extends JFrame{
 			
 			public void actionPerformed(ActionEvent event) {
 										
-				sendMessage(  userName.getText() + "<<>>" + new String( password.getPassword() ) );
+				sendMessage( userName.getText() + "<<>>" + new String( password.getPassword() ) );
 				
 				try {
 					String message = (String) inputStream.readObject();
+					System.out.println();
 					StringTokenizer tokens = new StringTokenizer( message, "<<>>");
-										
-					if( tokens.countTokens() > 2 ){
 						
+					String answer = null;
+					
+					if( tokens.hasMoreTokens() ) {
+						answer = tokens.nextToken();
+					}
+					
+					if( answer.equals( "ONLINE" ) ) {
+						JOptionPane.showMessageDialog(null, "This user is already authorized");
+					}
+					else if( answer.equals( "NOT FOUND") ) {
+						JOptionPane.showMessageDialog(null, "The user name or password is incorrect");
+					}
+					else {
+						String nameSurname = answer;					
 						clientList = new String[tokens.countTokens()];
 						int counter = 0;
 						
 						while( tokens.hasMoreTokens() ) {
 							clientList[ counter++ ] = tokens.nextToken();
-							System.out.println( "CLIENT LIST" + clientList[counter - 1] );
-							Thread.sleep(5000);
-						}
-					}
-					else if( tokens.countTokens() == 2 ) {
-						
-						String name = null;
-						String surname = null;
-						
-						while( tokens.hasMoreTokens() ) {
-							name = tokens.nextToken();
-							surname = tokens.nextToken();
 						}
 						
 						setVisible(false);
-						Client client = new Client( socket, name, surname, clientList );
-						client.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);	
-						executorService.execute(client);
-						closeConnection();
-					}
-					else {
-						String answer = null;
-					
-						if( tokens.hasMoreTokens() ) {
-							answer = tokens.nextToken();
-						}
-						
-						if( answer.equals( "ONLINE" ) ) {
-							JOptionPane.showMessageDialog(null, "This user is already authorized");
-						}
-						else if( answer.equals( "NOT FOUND") ) {
-							JOptionPane.showMessageDialog(null, "The user name or password is incorrect");
-						}
-					}
-					
+						Client client = new Client( socket, outputStream, inputStream, nameSurname, clientList );
+						client.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+						client.setVisible(true);
+						executorService.execute(client);					
+					}					
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -195,5 +180,10 @@ public class Login extends JFrame{
 		} catch (IOException e) {
 			System.out.println( "Error writing object" );
 		}
+	}
+
+	@Override
+	public void run() {
+				
 	}
 }

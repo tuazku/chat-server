@@ -5,9 +5,9 @@
 <hibernate-configuration>
     <session-factory>
         <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
-        <property name="hibernate.connection.password">qazxswed</property>
+        <property name="hibernate.connection.password">password</property>
         <property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/chat</property>
-        <property name="hibernate.connection.username">postgres</property>
+        <property name="hibernate.connection.username">username</property>
         <property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
         
         <!-- JDBC connection pool (use the built-in) -->

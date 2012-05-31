@@ -30,7 +30,7 @@ public class Login extends JFrame{
 	
 	private ExecutorService executor = Executors.newCachedThreadPool();
 	
-	//GUI FIELDS
+	//GUI FIELD
 	private JLabel userNameLabel;
 	private JLabel passwordLabel;
 	
